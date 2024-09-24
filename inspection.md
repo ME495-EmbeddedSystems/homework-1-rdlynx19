@@ -13,9 +13,9 @@ Unless otherwise specified, list the command and all arguments that you passed t
 
 
 ## Setup Instructions
-1. Build the workspace using `${insert command here}` so that it is unnecessary to rebuild when python files change.
-2. Initialize the ROS environment (i.e., set the necessary ROS environment variables) by executing `${insert command here}`
-3. Make sure no other ROS nodes are running prior to starting by inspecting the results of `${insert command here}`.
+1. Build the workspace using `colcon build` so that it is unnecessary to rebuild when python files change.
+2. Initialize the ROS environment (i.e., set the necessary ROS environment variables) by executing `source /opt/ros/jazzy/setup.bash`
+3. Make sure no other ROS nodes are running prior to starting by inspecting the results of `ros2 node list`.
    The ROS graph, including all topics and node labels, looks like:
    ![The ROS Graph](${export svg image, add it to repository, put path here so it displays in the README.md})
 
