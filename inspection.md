@@ -98,32 +98,22 @@ If the nodes launched from the `launchfile` are not running, you will get incorr
       Constraints: 
     ```
 
-12. Use the ROS command `ros2 interface show crazy_turtle_interfaces/srv/Switch` to retrieve a template/prototype for entering parameters for the `/switch` service on the command line.
+12. Use the ROS command `ros2 interface proto crazy_turtle_interfaces/srv/Switch` to retrieve a template/prototype for entering parameters for the `/switch` service on the command line.
    ```
-   turtlesim/Pose mixer # use a strange formula to set the new location of the turtle 
-      float32 x
-      float32 y
-      float32 theta
-      float32 linear_velocity
-      float32 angular_velocity
-   ---
-   float 64 x # the new x position of the new turtle
-   float 64 y # the new y position of the new 
+   "mixer:
+     x: 0.0
+     y: 0.0
+     theta: 0.0
+     linear_velocity: 0.0
+     angular_velocity: 0.0
+   " 
    ```
 
 ## Package Exploration
-1. Use the ROS command `ros2 interface show crazy_turtle_interfaces/srv/Switch` to list the interface types defined by `crazy_turtle_interfaces`
+1. Use the ROS command `ros2 interface package crazy_turtle_interfaces` to list the interface types defined by `crazy_turtle_interfaces`
    The output of the command looks like
    ```
-   turtlesim/Pose mixer # use a strange formula to set the new location of the turtle 
-      float32 x
-      float32 y
-      float32 theta
-      float32 linear_velocity
-      float32 angular_velocity
-   ---
-   float 64 x # the new x position of the new turtle
-   float 64 y # the new y position of the new 
+   crazy_turtle_interfaces/srv/Switch 
    ```
 2. Use the ROS command `ros2 pkg executables crazy_turtle` to list the executables included with the `crazy_turtle` package
    The output of the command looks like
