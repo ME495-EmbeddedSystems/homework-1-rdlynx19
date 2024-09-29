@@ -4,7 +4,7 @@ package_name = 'turtle_control'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.1.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -16,7 +16,7 @@ setup(
     maintainer='redhairedlynx',
     maintainer_email='pushkardave.vnit@gmail.com',
     description='TODO: Package description',
-    license='TODO: License declaration',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
