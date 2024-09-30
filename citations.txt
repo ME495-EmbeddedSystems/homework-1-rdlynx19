@@ -1,0 +1,2 @@
+https://answers.ros.org/question/358825/how-to-get-length-of-array-of-geometry_msgpoints-in-service-handle/
+For geometry_msgs point array

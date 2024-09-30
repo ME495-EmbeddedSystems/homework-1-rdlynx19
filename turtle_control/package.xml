@@ -3,7 +3,7 @@
 <package format="3">
   <name>turtle_control</name>
   <version>0.1.0</version>
-  <description>TODO: Package description</description>
+  <description>Package to control the turtle</description>
   <maintainer email="pushkardave.vnit@gmail.com">redhairedlynx</maintainer>
   <license>MIT</license>
 
