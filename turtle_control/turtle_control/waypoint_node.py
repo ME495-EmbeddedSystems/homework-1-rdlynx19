@@ -8,8 +8,9 @@ from geometry_msgs.msg import Twist, Vector3
 
 from turtle_interfaces.srv import Waypoints
 
-from turtlesim.srv import Spawn, Kill
-# Work ahead from this point, think about using turtlesim nodes without listing in dependency
+from turtlesim.srv import TeleportAbsolute
+
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 
 def turtle_twist(linear_vel, angular_vel):
@@ -37,16 +38,25 @@ class Waypoint(Node):
 
         self.pub = self.create_publisher(Twist, "cmd_vel", 10)
 
+
         self.declare_parameter('frequency',90)
         # Can change the parameter value during runtime but change is not effective
         self.freq = self.get_parameter('frequency').value
 
         self.declare_parameter('turtle_state','STOPPED')
+
+        self.cbgroup = MutuallyExclusiveCallbackGroup()
         
         self.timer = self.create_timer((1/self.freq),self.timer_callback)
         self._srv = self.create_service(Empty,'toggle', self.toggle_callback)
 
         self._interface_srv = self.create_service(Waypoints, 'load', self.waypoints_callback)
+
+        self._reset_client = self.create_client(Empty, "reset", callback_group=self.cbgroup)
+        
+
+        self._teleport_client = self.create_client(TeleportAbsolute, "/turtle1/teleport_absolute", callback_group=self.cbgroup)
+        
 
     def timer_callback(self):
         tim_turt_state = self.get_parameter('turtle_state').get_parameter_value().string_value
@@ -55,11 +65,10 @@ class Waypoint(Node):
             self.get_logger().debug("Issuing Command!") 
             twist = turtle_twist([4.5, 0.0, 0.0], [0.0, 0.0, -2.0])
             self.pub.publish(twist)
+            # self._pose_pub.publish()
     
     def toggle_callback(self,request,response):
         turt_state = self.get_parameter('turtle_state').get_parameter_value().string_value
-
-
         if(turt_state == 'MOVING'):
             self.get_logger().info('Stopping!')
             
@@ -74,7 +83,24 @@ class Waypoint(Node):
             self.set_parameters(stp_switch)
             return response
             
-    def waypoints_callback(self, request, response):
+    async def waypoints_callback(self, request, response):
+        # calling the turtlesim /reset service to reset the turtle
+        while not self._reset_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Reset service not available, waiting again")
+        await self._reset_client.call_async(Empty.Request())
+        
+        # Think about passing geometry_msgs/Point as service call arguments -- cite Joe for the syntax
+        while not self._teleport_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Teleport service not available, waiting again")
+        
+        tel_pos = TeleportAbsolute.Request()
+
+        for i in range(0,len(request.waypoints)):
+            tel_pos.x = request.waypoints[i].x
+            tel_pos.y = request.waypoints[i].y      
+            await self._teleport_client.call_async(tel_pos)
+            # write code to make turtlesim sleep
+        self.get_logger().info("Waypoint Callback Done!")
         return response
 
 def main(args=None):
