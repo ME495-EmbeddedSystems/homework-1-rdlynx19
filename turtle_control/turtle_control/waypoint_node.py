@@ -6,9 +6,11 @@ import math
 import rclpy.parameter
 from std_srvs.srv import Empty
 
-from geometry_msgs.msg import Twist, Vector3
+from geometry_msgs.msg import Twist, Vector3, Point
 
 from turtle_interfaces.srv import Waypoints
+
+from turtle_interfaces.msg import ErrorMetric
 
 from turtlesim.msg import Pose
 
@@ -37,6 +39,13 @@ def compute_distance(waypoints):
     
     return total_dist
 
+def calculate_tolerance(current_pos, current_waypoint):
+    tol = math.sqrt((current_pos.x - current_waypoint.x)**2 + (current_pos.y - current_waypoint.y)**2)
+
+    return tol
+
+
+
 class Waypoint(Node):
     """The waypoint Node"""
 
@@ -46,8 +55,18 @@ class Waypoint(Node):
 
         self.pub = self.create_publisher(Twist, "cmd_vel", 1)
 
+        self._metric_pub = self.create_publisher(ErrorMetric, "loop_metrics", 1)
+        
         self.sub = self.create_subscription(Pose, "/turtle1/pose", self.pose_callback, 10)
 
+        self.current_pose = Pose()
+
+        self.waypoints = []
+        self.actual_path = []
+
+        self.waypoints_count = 0
+        self.i = 0
+    
         self.declare_parameter('frequency',90)
         # Can change the parameter value during runtime but change is not effective
         self.freq = self.get_parameter('frequency').value
@@ -57,6 +76,9 @@ class Waypoint(Node):
         self.cbgroup = MutuallyExclusiveCallbackGroup()
         
         self.timer = self.create_timer((1/self.freq),self.timer_callback)
+
+        self._vel_timer = self.create_timer((1), self.vel_timer_callback)
+
         self._srv = self.create_service(Empty,'toggle', self.toggle_callback)
 
         self._interface_srv = self.create_service(Waypoints, 'load', self.waypoints_callback)
@@ -77,7 +99,36 @@ class Waypoint(Node):
     
     def pose_callback(self, msg):
         # self.get_logger().info("Theta value is: '%s'" %msg.theta)
-        pass
+        # Write a way to store the received message data
+        self.current_pose = msg
+        self.actual_path.append(msg)
+        
+
+
+    def vel_timer_callback(self):
+        turt_state = self.get_parameter('turtle_state').get_parameter_value().string_value
+        if(turt_state == "MOVING"):
+            if (self.i < len(self.waypoints) and calculate_tolerance(self.current_pose, self.waypoints[self.i]) < 0.05):
+                self.i += 1
+                if(self.i == len(self.waypoints)):
+                    self.get_logger().info("Loop Complete!")
+                    # self.toggle_callback(Empty.Request(),Empty.Response())
+                    
+
+                    # Update Error Metric Values
+                    loop_stats = ErrorMetric()
+                    loop_stats.complete_loops += 1
+                    self._metric_pub.publish(loop_stats)
+
+                    self.i = 0
+                    # return 
+
+            
+            yaw_vel =  (math.atan2(self.waypoints[self.i].y - self.current_pose.y, self.waypoints[self.i].x - self.current_pose.x) - self.current_pose.theta)
+            x_vel = 0.6 * calculate_tolerance(self.current_pose, self.waypoints[self.i])
+            robot_velocity = turtle_twist([x_vel, 0.0, 0.0], [0.0, 0.0, yaw_vel])
+            self.pub.publish(robot_velocity)
+        # self.toggle_callback(Empty.Request(), Empty.Response())
 
 
     def toggle_callback(self,request,response):
@@ -94,6 +145,12 @@ class Waypoint(Node):
             stop_2_move = rclpy.parameter.Parameter('turtle_state', rclpy.Parameter.Type.STRING, 'MOVING')
             stp_switch = [stop_2_move]
             self.set_parameters(stp_switch)
+
+            if(len(self.waypoints) == 0):
+                self.get_logger().error("No waypoints loaded. Load them with the \"load\" service ")
+                return response 
+
+            self.waypoints_count = len(self.waypoints)
             return response
             
     async def waypoints_callback(self, request, response):
@@ -111,7 +168,7 @@ class Waypoint(Node):
         while not self._pen_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info("Set Pen service not available, waiting again")
 
-
+        self.waypoints = request.waypoints
 
         pen_status = SetPen.Request()
         pen_status.r = 255
@@ -152,8 +209,19 @@ class Waypoint(Node):
         tel_pos.y = request.waypoints[0].y
         await self._teleport_client.call_async(tel_pos)
 
+        move_2_stop = rclpy.parameter.Parameter('turtle_state', rclpy.Parameter.Type.STRING, 'MOVING')
+        mv_switch = [move_2_stop]
+        self.set_parameters(mv_switch) 
         self.toggle_callback(Empty.Request(),Empty.Response())
+        
+        pen_status.r = 255
+        pen_status.g = 0
+        pen_status.b = 0
+        pen_status.off = 0
+        await self._pen_client.call_async(pen_status)
+
         response.distance = compute_distance(request.waypoints)
+
         self.get_logger().info("Waypoint Callback Done!")
         return response
 
