@@ -1,2 +1,7 @@
 https://answers.ros.org/question/358825/how-to-get-length-of-array-of-geometry_msgpoints-in-service-handle/
 For geometry_msgs point array
+
+
+https://design.ros2.org/articles/roslaunch_xml.html
+https://roboticsbackend.com/ros2-yaml-params/
+for loading yaml file in xml file

@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 
-import math
+import math, copy
 
 import rclpy.parameter
 from std_srvs.srv import Empty
@@ -32,7 +32,7 @@ def turtle_twist(linear_vel, angular_vel):
     return Twist(linear = Vector3(x = linear_vel[0], y = linear_vel[1], z = linear_vel[2]),
                     angular = Vector3(x = angular_vel[0], y = angular_vel[1], z = angular_vel[2]))
 
-def compute_distance(waypoints):
+def minimum_distance(waypoints):
     total_dist = 0.0
     for i in range(0,len(waypoints)-1):
         total_dist += math.sqrt((waypoints[i].x - waypoints[i+1].x)**2 + (waypoints[i].y - waypoints[i+1].y)**2)
@@ -44,8 +44,12 @@ def calculate_tolerance(current_pos, current_waypoint):
 
     return tol
 
+def actual_distance(stored_poses):
+    actual_dist = 0.0
+    for i in range(0, len(stored_poses)-1):
+        actual_dist += math.sqrt((stored_poses[i].x - stored_poses[i+1].x)**2 + (stored_poses[i].y - stored_poses[i+1].y)**2)
 
-
+    return actual_dist
 class Waypoint(Node):
     """The waypoint Node"""
 
@@ -60,18 +64,24 @@ class Waypoint(Node):
         self.sub = self.create_subscription(Pose, "/turtle1/pose", self.pose_callback, 10)
 
         self.current_pose = Pose()
+        self.loop_stats = ErrorMetric()
 
         self.waypoints = []
         self.actual_path = []
 
+        self.straight_line_distance = 0.0
+
         self.waypoints_count = 0
         self.i = 0
+        self.pos_count = 0
     
         self.declare_parameter('frequency',90)
         # Can change the parameter value during runtime but change is not effective
         self.freq = self.get_parameter('frequency').value
 
         self.declare_parameter('turtle_state','STOPPED')
+
+        self.declare_parameter('tolerance', 0.05)
 
         self.cbgroup = MutuallyExclusiveCallbackGroup()
         
@@ -107,20 +117,30 @@ class Waypoint(Node):
 
     def vel_timer_callback(self):
         turt_state = self.get_parameter('turtle_state').get_parameter_value().string_value
+        tol_val = self.get_parameter('tolerance').get_parameter_value().double_value
         if(turt_state == "MOVING"):
-            if (self.i < len(self.waypoints) and calculate_tolerance(self.current_pose, self.waypoints[self.i]) < 0.05):
+            if (self.i < len(self.waypoints) and calculate_tolerance(self.current_pose, self.waypoints[self.i]) < tol_val):
+                if(self.i == 0):
+                    self.pos_count += 1
                 self.i += 1
                 if(self.i == len(self.waypoints)):
+                    self.i = 0
+                if(self.pos_count == 2):
+                    self.pos_count = 1
                     self.get_logger().info("Loop Complete!")
                     # self.toggle_callback(Empty.Request(),Empty.Response())
                     
 
                     # Update Error Metric Values
-                    loop_stats = ErrorMetric()
-                    loop_stats.complete_loops += 1
-                    self._metric_pub.publish(loop_stats)
+                    self.loop_stats.complete_loops += 1
+                    path = copy.deepcopy(self.actual_path)
+                    act_distance = actual_distance(path)
+                    self.loop_stats.actual_distance = act_distance
+                    self.loop_stats.error = act_distance - self.straight_line_distance
 
-                    self.i = 0
+                    self._metric_pub.publish(self.loop_stats)
+
+                    self.actual_path = []
                     # return 
 
             
@@ -170,6 +190,8 @@ class Waypoint(Node):
 
         self.waypoints = request.waypoints
 
+        self.loop_stats = ErrorMetric()
+
         pen_status = SetPen.Request()
         pen_status.r = 255
         pen_status.g = 255
@@ -177,6 +199,7 @@ class Waypoint(Node):
         pen_status.width = 4
 
  
+
         for i in range(0,len(request.waypoints)):
             pen_status.off = 255
             await self._pen_client.call_async(pen_status)
@@ -220,7 +243,8 @@ class Waypoint(Node):
         pen_status.off = 0
         await self._pen_client.call_async(pen_status)
 
-        response.distance = compute_distance(request.waypoints)
+        response.distance = minimum_distance(request.waypoints)
+        self.straight_line_distance = response.distance
 
         self.get_logger().info("Waypoint Callback Done!")
         return response

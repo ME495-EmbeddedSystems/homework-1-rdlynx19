@@ -1,0 +1,5 @@
+roving_turtle:
+    ros__parameters:
+        background_b: 0
+        background_g: 200
+        background_r: 0
