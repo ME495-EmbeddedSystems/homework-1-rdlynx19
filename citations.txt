@@ -1,7 +1,7 @@
-https://answers.ros.org/question/358825/how-to-get-length-of-array-of-geometry_msgpoints-in-service-handle/
-For geometry_msgs point array
+[1]ROS. "How to get length of array of geometry_msg:Points in service handle? - ROS Answers: Open Source Q", Answers, Available: https://answers.ros.org/question/358825/how-to-get-length-of-array-of-geometry_msgpoints-in-service-handle/.
 
+[2]"ROS 2 Launch XML Format", Design, Available: https://design.ros2.org/articles/roslaunch_xml.html.
 
-https://design.ros2.org/articles/roslaunch_xml.html
-https://roboticsbackend.com/ros2-yaml-params/
-for loading yaml file in xml file
+[3]The Robotics Back-End. "ROS2 YAML For Parameters - The Robotics Back-End", Roboticsbackend, Available: https://roboticsbackend.com/ros2-yaml-params/.
+
+[4]Joe Blom. (for helping with the syntax of passing waypoints to the load service from the terminal)

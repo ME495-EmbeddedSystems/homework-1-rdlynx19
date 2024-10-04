@@ -9,7 +9,9 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
+        ############################### Begin_Citation [3] ###########################################
         ('share/' + package_name, ['package.xml', 'launch/waypoints.launch.xml', 'config/colors.yaml']),
+        ############################### End_Citation [3] #############################################
     ],
     install_requires=['setuptools'],
     zip_safe=True,
