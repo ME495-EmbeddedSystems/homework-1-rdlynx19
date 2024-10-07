@@ -4,4 +4,4 @@
 
 [3]The Robotics Back-End. "ROS2 YAML For Parameters - The Robotics Back-End", Roboticsbackend, Available: https://roboticsbackend.com/ros2-yaml-params/.
 
-[4]Joe Blom. (for helping with the syntax of passing waypoints to the load service from the terminal)
+[4]Joe Blom. 10/2/2024 
