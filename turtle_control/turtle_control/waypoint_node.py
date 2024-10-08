@@ -141,7 +141,7 @@ class Waypoint(Node):
 
         # Timers
         self.timer = self.create_timer((1/self.freq),self.timer_callback)
-        self._control_timer = self.create_timer((1), self.control_timer_callback)
+        self._control_timer = self.create_timer((1/60), self.control_timer_callback)
 
         # Helper Variables
         self.current_pose = Pose()
@@ -209,8 +209,9 @@ class Waypoint(Node):
                     # return 
 
             # Computing and publishing the linear and angular velocity for the turtle
-            yaw_vel = (math.atan2(self.waypoints[self.i].y - self.current_pose.y, self.waypoints[self.i].x - self.current_pose.x) - self.current_pose.theta)
-            x_vel = 0.6 * calculate_tolerance(self.current_pose, self.waypoints[self.i])
+            angular_diff = math.atan2(self.waypoints[self.i].y - self.current_pose.y, self.waypoints[self.i].x - self.current_pose.x)
+            yaw_vel = (angular_diff - self.current_pose.theta) + 0.5 * (angular_diff - self.current_pose.theta)/(1/60)
+            x_vel = 4 * calculate_tolerance(self.current_pose, self.waypoints[self.i]) 
             robot_velocity = turtle_twist([x_vel, 0.0, 0.0], [0.0, 0.0, yaw_vel])
             self._vel_pub.publish(robot_velocity)
 
