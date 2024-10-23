@@ -119,6 +119,7 @@ class Waypoint(Node):
         self._metric_pub = self.create_publisher(ErrorMetric, "loop_metrics", 1)
 
         # Subscribers
+        # use relative topics here
         self._pose_sub = self.create_subscription(Pose, "/turtle1/pose", self.pose_callback, 10)
 
         # Services
@@ -182,7 +183,7 @@ class Waypoint(Node):
 
         turt_state = self.get_parameter('turtle_state').get_parameter_value().string_value
         tol_val = self.get_parameter('tolerance').get_parameter_value().double_value
-        if(turt_state == "MOVING"):
+        if(turt_state == "MOVING"):# regular python style does not surround if statements with ()
             # Checking if one loop has been completed
             if (self.i < len(self.waypoints) and calculate_tolerance(self.current_pose, self.waypoints[self.i]) < tol_val):
                 if(self.i == 0):
@@ -193,6 +194,7 @@ class Waypoint(Node):
                 if(self.pos_count == 2):
                     self.pos_count = 1
                     self.get_logger().info("Loop Complete!")
+                    # Do not leave commented out code in final version
                     # self.toggle_callback(Empty.Request(),Empty.Response())
                     
 
@@ -228,7 +230,7 @@ class Waypoint(Node):
                 An empty response object
         """
         turt_state = self.get_parameter('turtle_state').get_parameter_value().string_value
-        if(turt_state == 'MOVING'):
+        if(turt_state == 'MOVING'): 
             self.get_logger().info('Stopping!')
             
             move_2_stop = rclpy.parameter.Parameter('turtle_state', rclpy.Parameter.Type.STRING, 'STOPPED')

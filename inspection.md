@@ -14,8 +14,10 @@ Unless otherwise specified, list the command and all arguments that you passed t
 
 ## Setup Instructions
 1. Build the workspace using `colcon build --symlink-install` so that it is unnecessary to rebuild when python files change.
-2. Initialize the ROS environment (i.e., set the necessary ROS environment variables) by executing `source /opt/ros/jazzy/setup.bash`
+2. Initialize the ROS environment (i.e., set the necessary ROS environment variables) by executing `source /opt/ros/jazzy/setup.bash` `install/setup.bash`, for your workspace
 3. Make sure no other ROS nodes are running prior to starting by inspecting the results of `ros2 node list`.
+[What launchfile do you use and how do you use
+[what command to get a visual depection of the ros2 graph
    The ROS graph, including all topics and node labels, looks like:
    ![The ROS Graph](rosgraph.svg)
 
@@ -50,6 +52,7 @@ If the nodes launched from the `launchfile` are not running, you will get incorr
    /mover/describe_parameters
    /mover/get_parameter_types
    /mover/get_parameters
+   /mover/get_type_description
    /mover/list_parameters
    /mover/set_parameters
    /mover/set_parameters_atomically
